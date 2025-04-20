@@ -35,6 +35,14 @@ const media = urlParams.get("media");
 
 const converter = new showdown.Converter({ simplifiedAutoLink: true, strikethrough: true, tables: true });
 
+showdown.extension('smallText', function() {
+    return [{
+        type: 'lang',
+        regex: /-# (.*?)(\n|$)/g,
+        replace: '<small>$1</small>$2<br>$2'
+    }];
+});
+
 async function loadArticle() {
     if (!articleId || !media) {
         document.getElementById("article-content").innerHTML = "<p>Article introuvable</p>";
