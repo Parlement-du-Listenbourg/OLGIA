@@ -55,13 +55,18 @@ async function loadArticles() {
         allArticles.push(data);
     });
 
-    allArticles.sort((a, b) => {
-        try {
-            return b.timestamp.seconds - a.timestamp.seconds;
-        } catch {
-            return 0;
-        }
-    });
+function getComparableDate(article) {
+    if (article.timestamp?.seconds) {
+        return new Date(article.timestamp.seconds * 1000);
+    } else if (typeof article.timestamp === "string") {
+        // Format supposé : "DD/MM/YYYY"
+        const [day, month, year] = article.timestamp.split("/");
+        return new Date(`${year}-${month}-${day}`);
+    }
+    return new Date(0); // Fallback : très ancienne date
+}
+
+allArticles.sort((a, b) => getComparableDate(b) - getComparableDate(a));
 
     allArticles.forEach((article) => {
         const preview = converter.makeHtml(article.content.substring(0, 200));
