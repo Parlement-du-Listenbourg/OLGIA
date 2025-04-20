@@ -1,7 +1,20 @@
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-const firebaseConfig = {
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import showdown from "https://cdn.jsdelivr.net/npm/showdown@2.1.0/+esm";
+
+// Configuration Firebase - Imago Veritatis
+const configImago = {
+    apiKey: "AIzaSyCaexv-0SVEmPeRNYt-WviKBiUhH-Ju7XQ",
+    authDomain: "imago-veritatis.firebaseapp.com",
+    projectId: "imago-veritatis",
+    storageBucket: "imago-veritatis.appspot.com",
+    messagingSenderId: "000000000000",
+    appId: "1:000000000000:web:exampleid1"
+};
+
+// Configuration Firebase - RTL World
+const configRTL = {
     apiKey: "AIzaSyBw7PSHW4fe2jptxyf7xHtyINSrYG_TupA",
     authDomain: "rtl-world.firebaseapp.com",
     projectId: "rtl-world",
@@ -9,64 +22,60 @@ const firebaseConfig = {
     messagingSenderId: "1092619392407",
     appId: "1:1092619392407:web:f968b6ef5416d66d6360d2",
     measurementId: "G-4GBT38563H"
-
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const appImago = initializeApp(configImago, "imago");
+const appRTL = initializeApp(configRTL, "rtl");
 
-showdown.extension('smallText', function() {
-    return [{
-        type: 'lang',
-        regex: /-# (.*?)(\n|$)/g,
-        replace: '<small>$1</small>$2'
-    }];
-});
+const dbImago = getFirestore(appImago);
+const dbRTL = getFirestore(appRTL);
 
-let converter = new showdown.Converter({
-    simplifiedAutoLink: true,
-    strikethrough: true,
-    tables: true,
-    extensions: ['smallText']
-});
+const converter = new showdown.Converter({ simplifiedAutoLink: true, strikethrough: true, tables: true });
+const container = document.getElementById("articles-container");
 
-async function loadArticles() {    
-    const articlesRef = collection(db, "articles");
-    const querySnapshot = await getDocs(articlesRef);
+async function loadArticles() {
+    const [snapImago, snapRTL] = await Promise.all([
+        getDocs(collection(dbImago, "articles")),
+        getDocs(collection(dbRTL, "articles"))
+    ]);
 
-    let articlesContainer = document.getElementById("articles-container");
-    let articles = [];
+    const allArticles = [];
 
-    querySnapshot.forEach((doc) => {
-        let article = doc.data();
-        article.id = doc.id;
-        articles.push(article);
+    snapImago.forEach((doc) => {
+        const data = doc.data();
+        data.id = doc.id;
+        data.source = "imago";
+        allArticles.push(data);
     });
 
-    // CORRECTION ICI
-    articles.sort((a, b) => {
-        let dateA = a.timestamp.split('/').reverse().join('-');
-        let dateB = b.timestamp.split('/').reverse().join('-');
-        return dateB.localeCompare(dateA);
+    snapRTL.forEach((doc) => {
+        const data = doc.data();
+        data.id = doc.id;
+        data.source = "rtl";
+        allArticles.push(data);
     });
 
-    articles.forEach((article) => {
-        let previewText = article.content.substring(0, 200);
-        let previewHTML = converter.makeHtml(previewText);
+    allArticles.sort((a, b) => {
+        try {
+            return b.timestamp.seconds - a.timestamp.seconds;
+        } catch {
+            return 0;
+        }
+    });
 
-        let articleElement = document.createElement("div");
-        articleElement.classList.add("article-card");
-        articleElement.innerHTML = `
-            <a href="article.html?id=${article.id}" class="article-link">
+    allArticles.forEach((article) => {
+        const preview = converter.makeHtml(article.content.substring(0, 200));
+        const el = document.createElement("div");
+        el.classList.add("article-card");
+        el.innerHTML = `
+            <a href="article.html?id=${article.id}&media=${article.source}" class="article-link">
                 <h2>${article.title}</h2>
-                <p>Auteur : ${article.author} - Publié le : ${article.timestamp} - Catégorie : ${article.category}</p>
-                <div>${previewHTML}...</div>
-                ${article.meme ? `<img src="${article.meme}" alt="Meme" class="article-image">` : ''}
-            </a>
-        `;
-        articlesContainer.appendChild(articleElement);
+                <p><em>${article.author} – ${article.timestamp}</em> | Source : <strong>${article.source.toUpperCase()}</strong></p>
+                <div>${preview}...</div>
+                ${article.meme ? `<img src="${article.meme}" alt="Illustration" class="article-image">` : ""}
+            </a>`;
+        container.appendChild(el);
     });
 }
-
 
 window.onload = loadArticles;
