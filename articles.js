@@ -39,20 +39,20 @@ const dbRTL = getFirestore(appRTL);
 const converter = new showdown.Converter({ simplifiedAutoLink: true, strikethrough: true, tables: true });
 const container = document.getElementById("articles-container");
 
-showdown.extension('smallText', function() {
-    return [{
-        type: 'lang',
-        regex: /-# (.*?)(\n|$)/g,
-        replace: '<small>$1</small>$2'
-    }];
-});
+//showdown.extension('smallText', function() {
+    //return [{
+        //type: 'lang',
+        //regex: /-# (.*?)(\n|$)/g,
+        //replace: '<small>$1</small>$2'
+    //}];
+//});
 
-let converter = new showdown.Converter({
-    simplifiedAutoLink: true,
-    strikethrough: true,
-    tables: true,
-    extensions: ['smallText']
-});
+//let converter = new showdown.Converter({
+    //simplifiedAutoLink: true,
+    //strikethrough: true,
+    //tables: true,
+    //extensions: ['smallText']
+//});
 
 async function loadArticles() {
     const [snapImago, snapRTL] = await Promise.all([
