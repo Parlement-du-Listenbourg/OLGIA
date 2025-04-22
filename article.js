@@ -33,8 +33,6 @@ const urlParams = new URLSearchParams(window.location.search);
 const articleId = urlParams.get("id");
 const media = urlParams.get("media");
 
-const converter = new showdown.Converter({ simplifiedAutoLink: true, strikethrough: true, tables: true });
-
 showdown.extension('smallText', function() {
     return [{
         type: 'lang',
@@ -42,6 +40,8 @@ showdown.extension('smallText', function() {
         replace: '<small>$1</small>$2<br>$2'
     }];
 });
+
+const converter = new showdown.Converter({ simplifiedAutoLink: true, strikethrough: true, tables: true });
 
 async function loadArticle() {
     if (!articleId || !media) {
