@@ -33,15 +33,22 @@ const urlParams = new URLSearchParams(window.location.search);
 const articleId = urlParams.get("id");
 const media = urlParams.get("media");
 
-showdown.extension('smallText', function() {
-    return [{
-        type: 'lang',
-        regex: /-# (.*?)(\n|$)/g,
-        replace: '<small>$1</small>$2<br>$2'
-    }];
+// ✅ D'abord, on déclare l'extension
+showdown.extension('smallText', function () {
+  return [{
+    type: 'lang',
+    regex: /-# (.*?)(\n|$)/g,
+    replace: '<p><small>$1</small></p>'
+  }];
 });
 
-const converter = new showdown.Converter({ simplifiedAutoLink: true, strikethrough: true, tables: true });
+// ✅ Ensuite, on crée le converter EN ACTIVANT l’extension
+const converter = new showdown.Converter({
+  simplifiedAutoLink: true,
+  strikethrough: true,
+  tables: true,
+  extensions: ['smallText'] // 👈 cette ligne manquait !
+});
 
 async function loadArticle() {
     if (!articleId || !media) {
