@@ -50,6 +50,12 @@ const converter = new showdown.Converter({
   extensions: ['smallText'] // 👈 cette ligne manquait !
 });
 
+function getFullSourceName(sourceKey) {
+    if (sourceKey === "rtl") return "RTL World";
+    if (sourceKey === "imago") return "Imago Veritatis";
+    return "Inconnu";
+}
+
 async function loadArticle() {
     if (!articleId || !media) {
         document.getElementById("article-content").innerHTML = "<p>Article introuvable</p>";
@@ -69,11 +75,28 @@ async function loadArticle() {
     document.title = `Article – ${article.title}`;
 
     document.getElementById("article-category").textContent = article.category || "";
-    const htmlContent = converter.makeHtml(article.content);
+    
+    // 🔧 Correction automatique du contenu Markdown mal formaté
+    let fixedMarkdown = article.content;
+
+    // Ajoute un saut de ligne double si c’est tout collé
+    if (!fixedMarkdown.includes('\n\n')) {
+    fixedMarkdown = fixedMarkdown.replace(/(?<!\n)\n(?!\n)/g, '\n\n');
+    }
+
+    // Convertit les -# en <p><small>...</small></p> si encore présents
+    fixedMarkdown = fixedMarkdown.replace(/-# (.*?)(\n|$)/g, '<p><small>$1</small></p>');
+
+    // 🔁 Conversion en HTML propre
+    const htmlContent = converter.makeHtml(fixedMarkdown);
+
+
+
 
     document.getElementById("article-content").innerHTML = `
         <h1 class="article-title">${article.title}</h1>
-        <p class="article-meta">${article.author} – ${article.timestamp} | Source : ${media.toUpperCase()}</p>
+        <p class="article-category">${article.category || "Non spécifiée"}</p>
+        <p class="article-meta">${article.author} – ${article.timestamp} | Source : ${getFullSourceName(media)}</p>
         <div class="article-body">${htmlContent}</div>
     `;
 

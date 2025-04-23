@@ -96,7 +96,8 @@ allArticles.sort((a, b) => getComparableDate(b) - getComparableDate(a));
         el.innerHTML = `
             <a href="article.html?id=${article.id}&media=${article.source}" class="article-link">
                 <h2>${article.title}</h2>
-                <p><em>${article.author} – ${article.timestamp}</em> | Source : <strong>${article.source.toUpperCase()}</strong></p>
+                <p class="article-category">${article.category || "Non spécifiée"}</p>
+                <p><em>${article.author} – ${article.timestamp}</em> | Source : <strong>${getFullSourceName(article.source)}</strong>
                 <div>${preview}...</div>
                 ${article.meme ? `<img src="${article.meme}" alt="Illustration" class="article-image">` : ""}
             </a>`;
