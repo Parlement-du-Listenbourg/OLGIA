@@ -78,6 +78,10 @@ async function loadArticle() {
     '$1)\n\n'
   );
 
+  // Gère les blocs "petit texte" au format Imago avec -# en début de ligne
+  fixedMarkdown = fixedMarkdown.replace(/^-# (.*)$/gm, '<small>$1</small>');
+
+
   // 💬 Conversion propre
   const htmlContent = converter.makeHtml(fixedMarkdown);
 
