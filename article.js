@@ -71,10 +71,8 @@ async function loadArticle() {
   fixedMarkdown = fixedMarkdown.replace(/\n(?=[a-z])/g, ' ');
   fixedMarkdown = fixedMarkdown.replace(/<\/a>\n(?=, )/g, '</a>, ');
 
-  // Optionnel : ajouter \n\n si tout est collé
-  if (!fixedMarkdown.includes('\n\n')) {
-    fixedMarkdown = fixedMarkdown.replace(/(?<!\n)\n(?!\n)/g, '\n\n');
-  }
+  // 🔧 Remplacer -# par un double saut de ligne pour nouveau paragraphe (comme Imago)
+  fixedMarkdown = fixedMarkdown.replace(/-#\s*/g, '\n\n');
 
   const htmlContent = converter.makeHtml(fixedMarkdown);
 
