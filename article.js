@@ -1,4 +1,3 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import showdown from "https://cdn.jsdelivr.net/npm/showdown@2.1.0/+esm";
@@ -23,31 +22,22 @@ const configRTL = {
     measurementId: "G-4GBT38563H"
 };
 
-// Instances
+// Firebase
 const appImago = initializeApp(configImago, "imago");
 const appRTL = initializeApp(configRTL, "rtl");
 const dbImago = getFirestore(appImago);
 const dbRTL = getFirestore(appRTL);
 
+// URL params
 const urlParams = new URLSearchParams(window.location.search);
 const articleId = urlParams.get("id");
 const media = urlParams.get("media");
 
-// ✅ D'abord, on déclare l'extension
-showdown.extension('smallText', function () {
-  return [{
-    type: 'lang',
-    regex: /-# (.*?)(\n|$)/g,
-    replace: '<p><small>$1</small></p>'
-  }];
-});
-
-// ✅ Ensuite, on crée le converter EN ACTIVANT l’extension
+// Showdown
 const converter = new showdown.Converter({
-  simplifiedAutoLink: true,
-  strikethrough: true,
-  tables: true,
-  extensions: ['smallText'] // 👈 cette ligne manquait !
+    simplifiedAutoLink: true,
+    strikethrough: true,
+    tables: true,
 });
 
 function getFullSourceName(sourceKey) {
@@ -74,32 +64,22 @@ async function loadArticle() {
     const article = articleSnap.data();
     document.title = `Article – ${article.title}`;
 
-    document.getElementById("article-category").textContent = article.category || "";
-    
-    // 🔧 Correction automatique du contenu Markdown mal formaté
+    // Correction très légère si les paragraphes sont collés
     let fixedMarkdown = article.content;
-
-    // Ajoute un saut de ligne double si c’est tout collé
     if (!fixedMarkdown.includes('\n\n')) {
-    fixedMarkdown = fixedMarkdown.replace(/(?<!\n)\n(?!\n)/g, '\n\n');
+        fixedMarkdown = fixedMarkdown.replace(/(?<!\n)\n(?!\n)/g, '\n\n');
     }
 
-    // Convertit les -# en <p><small>...</small></p> si encore présents
-    fixedMarkdown = fixedMarkdown.replace(/-# (.*?)(\n|$)/g, '<p><small>$1</small></p>');
-
-    // 🔁 Conversion en HTML propre
     const htmlContent = converter.makeHtml(fixedMarkdown);
-
 
     document.getElementById("article-content").innerHTML = `
         <h1 class="article-title">${article.title}</h1>
         <p class="article-meta">
-            Auteur : ${article.author} – Publié le : ${article.timestamp} – Catégorie : ${article.category || "Non spécifiée"} | 
+            Auteur : ${article.author} – Publié le : ${article.timestamp} – Catégorie : ${article.category || "Non spécifiée"} |
             Source : ${getFullSourceName(media)}
         </p>
         <div class="article-body">${htmlContent}</div>
-`;
-
+    `;
 
     if (article.image) {
         const img = document.createElement("img");
