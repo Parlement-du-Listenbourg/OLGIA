@@ -91,12 +91,10 @@ async function loadArticle() {
     const htmlContent = converter.makeHtml(fixedMarkdown);
 
 
-
-
     document.getElementById("article-content").innerHTML = `
-        <h1 class="article-title">${article.title}</h1>
+        <h1 class="article-title"></h1>
         <p class="article-category">${article.category || "Non spécifiée"}</p>
-        <p class="article-meta">${article.author} – ${article.timestamp} | Source : ${getFullSourceName(media)}</p>
+        <p class="article-meta">${article.author} – ${article.timestamp} | Source : ${getFullSourceName(media)} - Catégorie : ${article.title}</p>
         <div class="article-body">${htmlContent}</div>
     `;
 
