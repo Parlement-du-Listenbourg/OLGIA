@@ -92,10 +92,14 @@ async function loadArticle() {
 
 
     document.getElementById("article-content").innerHTML = `
-        <h1 class="article-title"></h1>
-        <p class="article-meta">${article.author} – ${article.timestamp} | Source : ${getFullSourceName(media)} - Catégorie : ${article.category}</p>
+        <h1 class="article-title">${article.title}</h1>
+        <p class="article-meta">
+            Auteur : ${article.author} – Publié le : ${article.timestamp} – Catégorie : ${article.category || "Non spécifiée"} | 
+            Source : ${getFullSourceName(media)}
+        </p>
         <div class="article-body">${htmlContent}</div>
-    `;
+`;
+
 
     if (article.image) {
         const img = document.createElement("img");
