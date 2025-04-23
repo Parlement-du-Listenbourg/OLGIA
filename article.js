@@ -93,8 +93,7 @@ async function loadArticle() {
 
     document.getElementById("article-content").innerHTML = `
         <h1 class="article-title"></h1>
-        <p class="article-category">${article.category || "Non spécifiée"}</p>
-        <p class="article-meta">${article.author} – ${article.timestamp} | Source : ${getFullSourceName(media)} - Catégorie : ${article.title}</p>
+        <p class="article-meta">${article.author} – ${article.timestamp} | Source : ${getFullSourceName(media)} - Catégorie : ${article.category}</p>
         <div class="article-body">${htmlContent}</div>
     `;
 
