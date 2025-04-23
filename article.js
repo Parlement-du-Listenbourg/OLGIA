@@ -64,28 +64,20 @@ async function loadArticle() {
   const article = articleSnap.data();
   document.title = `Article – ${article.title}`;
 
-  // 🔧 Correction légère des retours à la ligne
   let fixedMarkdown = article.content;
 
-  // Si aucun paragraphe, on ajoute des \n\n pour aérer
+  // 🔧 Corriger les sauts de ligne cassant les blocs Markdown
+  fixedMarkdown = fixedMarkdown.replace(/\n, /g, ', ');
+  fixedMarkdown = fixedMarkdown.replace(/\n(?=[a-z])/g, ' ');
+  fixedMarkdown = fixedMarkdown.replace(/<\/a>\n(?=, )/g, '</a>, ');
+
+  // Optionnel : ajouter \n\n si tout est collé
   if (!fixedMarkdown.includes('\n\n')) {
     fixedMarkdown = fixedMarkdown.replace(/(?<!\n)\n(?!\n)/g, '\n\n');
   }
 
-  // 💡 Ajoute un saut après chaque lien Discord collé
-  fixedMarkdown = fixedMarkdown.replace(
-    /(https:\/\/discord\.com\/channels\/[^\s)]+)\)/g,
-    '$1)\n\n'
-  );
-
-  // Gère les blocs "petit texte" au format Imago avec -# en début de ligne
-  fixedMarkdown = fixedMarkdown.replace(/^-# (.*)$/gm, '<small>$1</small>');
-
-
-  // 💬 Conversion propre
   const htmlContent = converter.makeHtml(fixedMarkdown);
 
-  // Injection HTML
   document.getElementById("article-content").innerHTML = `
     <h1 class="article-title">${article.title}</h1>
     <p class="article-meta">
@@ -95,7 +87,6 @@ async function loadArticle() {
     <div class="article-body">${htmlContent}</div>
   `;
 
-  // Illustration
   if (article.image) {
     const img = document.createElement("img");
     img.src = article.image;
