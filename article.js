@@ -65,6 +65,7 @@ async function loadArticle() {
     }
 
     const article = articleSnap.data();
+    document.getElementById("article-category").textContent = article.category || "Non spécifiée";
     document.title = `Article – ${article.title}`;
 
     // ✏️ Correction des sauts de ligne mal formés
