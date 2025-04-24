@@ -63,7 +63,7 @@ async function loadArticle() {
 
   const article = articleSnap.data();
   document.title = `Article – ${article.title}`;
-  document.getElementById("article-title").textContent = article-title;
+  //document.getElementById("article-title").textContent = article-title;
 
 
   let fixedMarkdown = article.content;
@@ -94,6 +94,9 @@ async function loadArticle() {
     img.classList.add("article-image");
     document.body.appendChild(img);
   }
-}
+
+  else {
+        document.getElementById("article-content").innerHTML = "<p>Article non trouvé</p>";
+  }
 
 window.onload = loadArticle;
