@@ -95,4 +95,5 @@ async function loadArticle() {
     document.body.appendChild(img);
   }
 }
+
 window.onload = loadArticle;
