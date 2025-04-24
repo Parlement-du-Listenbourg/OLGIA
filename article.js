@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import showdown from "https://cdn.jsdelivr.net/npm/showdown@2.1.0/+esm";
 
-// Configs Firebase
+// 🔧 Configs Firebase
 const configImago = {
   apiKey: "AIzaSyCaexv-0SVEmPeRNYt-WviKBiUhH-Ju7XQ",
   authDomain: "imago-veritatis.firebaseapp.com",
@@ -22,78 +22,82 @@ const configRTL = {
   measurementId: "G-4GBT38563H"
 };
 
-// Init Firebase
+// 🔌 Initialisation Firebase
 const appImago = initializeApp(configImago, "imago");
 const appRTL = initializeApp(configRTL, "rtl");
 const dbImago = getFirestore(appImago);
 const dbRTL = getFirestore(appRTL);
 
-// Récupération des paramètres d'URL
+// 🔍 Lecture des paramètres d'URL
 const urlParams = new URLSearchParams(window.location.search);
 const articleId = urlParams.get("id");
 const media = urlParams.get("media");
 
-// Convertisseur Markdown basique (sans extension custom)
+// 📝 Convertisseur Markdown
 const converter = new showdown.Converter({
   simplifiedAutoLink: true,
   strikethrough: true,
   tables: true
 });
 
+// 🔤 Nom complet de la source
 function getFullSourceName(sourceKey) {
   if (sourceKey === "rtl") return "RTL World";
   if (sourceKey === "imago") return "Imago Veritatis";
   return "Inconnu";
 }
 
+// 📰 Chargement de l'article
 async function loadArticle() {
-  if (!articleId || !media) {
-    document.getElementById("article-content").innerHTML = "<p>Article introuvable</p>";
-    return;
-  }
+  try {
+    if (!articleId || !media) {
+      document.getElementById("article-content").innerHTML = "<p>Article introuvable</p>";
+      return;
+    }
 
-  const db = media === "imago" ? dbImago : dbRTL;
-  const articleRef = doc(db, "articles", articleId);
-  const articleSnap = await getDoc(articleRef);
+    const db = media === "imago" ? dbImago : dbRTL;
+    const articleRef = doc(db, "articles", articleId);
+    const articleSnap = await getDoc(articleRef);
 
-  if (!articleSnap.exists()) {
-    document.getElementById("article-content").innerHTML = "<p>Article non trouvé</p>";
-    return;
-  }
+    if (!articleSnap.exists()) {
+      document.getElementById("article-content").innerHTML = "<p>Article non trouvé</p>";
+      return;
+    }
 
-  const article = articleSnap.data();
-  document.title = `Article – ${article.title}`;
-  document.getElementById("article-title-display").textContent = article.title;
+    const article = articleSnap.data();
+    document.title = `Article – ${article.title}`;
 
+    // ✏️ Correction des sauts de ligne mal formés
+    let fixedMarkdown = article.content
+      .replace(/\n, /g, ', ')
+      .replace(/\n(?=[a-z])/g, ' ')
+      .replace(/<\/a>\n(?=, )/g, '</a>, ')
+      .replace(/-#\s*/g, '\n\n');
 
-  let fixedMarkdown = article.content;
+    const htmlContent = converter.makeHtml(fixedMarkdown);
 
-  // 🔧 Corriger les sauts de ligne cassant les blocs Markdown
-  fixedMarkdown = fixedMarkdown.replace(/\n, /g, ', ');
-  fixedMarkdown = fixedMarkdown.replace(/\n(?=[a-z])/g, ' ');
-  fixedMarkdown = fixedMarkdown.replace(/<\/a>\n(?=, )/g, '</a>, ');
+    document.getElementById("article-content").innerHTML = `
+      <h1 class="article-title">${article.title}</h1>
+      <p class="article-meta">
+        Auteur : ${article.author} – Publié le : ${article.timestamp} – Catégorie : ${article.category || "Non spécifiée"} |
+        Source : ${getFullSourceName(media)}
+      </p>
+      <div class="article-body">${htmlContent}</div>
+    `;
 
-  // 🔧 Remplacer -# par un double saut de ligne pour nouveau paragraphe (comme Imago)
-  fixedMarkdown = fixedMarkdown.replace(/-#\s*/g, '\n\n');
+    if (article.image) {
+      const img = document.createElement("img");
+      img.src = article.image;
+      img.alt = "Illustration";
+      img.classList.add("article-image");
+      document.body.appendChild(img);
+    }
 
-  const htmlContent = converter.makeHtml(fixedMarkdown);
-
-  document.getElementById("article-content").innerHTML = `
-    <h1 class="article-title">${article.title}</h1>
-    <p class="article-meta">
-      Auteur : ${article.author} – Publié le : ${article.timestamp} – Catégorie : ${article.category || "Non spécifiée"} |
-      Source : ${getFullSourceName(media)}
-    </p>
-    <div class="article-body">${htmlContent}</div>
-  `;
-
-  if (article.image) {
-    const img = document.createElement("img");
-    img.src = article.image;
-    img.alt = "Illustration";
-    img.classList.add("article-image");
-    document.body.appendChild(img);
+  } catch (error) {
+    console.error("Erreur de chargement :", error);
+    document.getElementById("article-content").innerHTML = "<p>Erreur de chargement de l'article.</p>";
   }
 }
 
-window.onload = loadArticle;
+// ✅ Lancement après chargement du DOM
+document.addEventListener("DOMContentLoaded", loadArticle);
