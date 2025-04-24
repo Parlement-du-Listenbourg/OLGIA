@@ -63,7 +63,7 @@ async function loadArticle() {
 
   const article = articleSnap.data();
   document.title = `Article – ${article.title}`;
-  document.getElementById("article-title-display").textContent = article.title;
+  document.getElementById("category").textContent = category;
 
 
   let fixedMarkdown = article.content;
