@@ -94,5 +94,5 @@ async function loadArticle() {
     img.classList.add("article-image");
     document.body.appendChild(img);
   }
-
+}
 window.onload = loadArticle;
