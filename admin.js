@@ -20,21 +20,11 @@ const auth = getAuth(app);
 const form = document.getElementById("articleForm");
 
 onAuthStateChanged(auth, (user) => {
-    if (user) {
-        if (!isUserAuthorized(user)) {
-            alert("Accès refusé : Vous n'êtes pas autorisé à accéder à cette page.");
-            window.location.href = ".";
-        }
-    } else {
+    if (!user) {
         alert("Veuillez vous connecter pour accéder à cette page.");
         window.location.href = "login.html";
     }
 });
-
-function isUserAuthorized(user) {
-    const authorizedEmails = ["parlement.listenbourg@gmail.com"];
-    return authorizedEmails.includes(user.email);
-}
 
 async function uploadToImgBB(file) {
     const formData = new FormData();
