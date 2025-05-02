@@ -133,6 +133,67 @@ body {
     display: block;
     border-radius: 8px;
 }
+.header-select {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 10px;
+}
+
+.header-select select {
+    background-color: #333;
+    color: #66aaff;
+    border: none;
+    padding: 8px 16px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 5px;
+    font-family: 'Arial', sans-serif;
+    height: 40px;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.header-select select:hover {
+    background-color: #444;
+}
+
+@media (max-width: 768px) {
+    .main-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .header-button,
+    .header-select select {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        text-align: center;
+    }
+
+    .header-select {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .logo {
+        align-self: center;
+    }
+
+    .page-title {
+        text-align: center;
+        width: 100%;
+    }
+}
+
+.article-card {
+    word-wrap: break-word;
+}
 
 small {
     font-size: 0.85em;

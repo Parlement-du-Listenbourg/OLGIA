@@ -1,9 +1,8 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import showdown from "https://cdn.jsdelivr.net/npm/showdown@2.1.0/+esm";
 
-// Configuration Firebase - Imago Veritatis
+// Configs Firebase
 const configImago = {
     apiKey: "AIzaSyCaexv-0SVEmPeRNYt-WviKBiUhH-Ju7XQ",
     authDomain: "imago-veritatis.firebaseapp.com",
@@ -13,7 +12,6 @@ const configImago = {
     appId: "1:000000000000:web:exampleid1"
 };
 
-// Configuration Firebase - RTL World
 const configRTL = {
     apiKey: "AIzaSyBw7PSHW4fe2jptxyf7xHtyINSrYG_TupA",
     authDomain: "rtl-world.firebaseapp.com",
@@ -24,35 +22,44 @@ const configRTL = {
     measurementId: "G-4GBT38563H"
 };
 
-function getFullSourceName(sourceKey) {
-    if (sourceKey === "rtl") return "RTL World";
-    if (sourceKey === "imago") return "Imago Veritatis";
-    return "Inconnu";
-}
-
+// Init Firebase
 const appImago = initializeApp(configImago, "imago");
 const appRTL = initializeApp(configRTL, "rtl");
-
 const dbImago = getFirestore(appImago);
 const dbRTL = getFirestore(appRTL);
 
-const converter = new showdown.Converter({ simplifiedAutoLink: true, strikethrough: true, tables: true });
-const container = document.getElementById("articles-container");
+// Markdown
+showdown.extension('smallText', function () {
+    return [{
+        type: 'lang',
+        regex: /-# (.*?)(\n|$)/g,
+        replace: '<small>$1</small>$2'
+    }];
+});
 
-//showdown.extension('smallText', function() {
-    //return [{
-        //type: 'lang',
-        //regex: /-# (.*?)(\n|$)/g,
-        //replace: '<small>$1</small>$2'
-    //}];
-//});
+const converter = new showdown.Converter({
+    simplifiedAutoLink: true,
+    strikethrough: true,
+    tables: true,
+    extensions: ['smallText']
+});
 
-//let converter = new showdown.Converter({
-    //simplifiedAutoLink: true,
-    //strikethrough: true,
-    //tables: true,
-    //extensions: ['smallText']
-//});
+function getFullSourceName(key) {
+    return key === "imago" ? "Imago Veritatis" : key === "rtl" ? "RTL World" : "Inconnu";
+}
+
+let allArticles = [];
+
+function getComparableDate(article) {
+    if (article.timestamp?.seconds) {
+        return new Date(article.timestamp.seconds * 1000);
+    }
+    if (typeof article.timestamp === "string") {
+        const [d, m, y] = article.timestamp.split("/");
+        return new Date(`${y}-${m}-${d}`);
+    }
+    return new Date(0);
+}
 
 async function loadArticles() {
     const [snapImago, snapRTL] = await Promise.all([
@@ -60,60 +67,94 @@ async function loadArticles() {
         getDocs(collection(dbRTL, "articles"))
     ]);
 
-    const allArticles = [];
+    allArticles = [];
 
-    snapImago.forEach((doc) => {
+    snapImago.forEach(doc => {
         const data = doc.data();
         data.id = doc.id;
         data.source = "imago";
         allArticles.push(data);
     });
 
-    snapRTL.forEach((doc) => {
+    snapRTL.forEach(doc => {
         const data = doc.data();
         data.id = doc.id;
         data.source = "rtl";
         allArticles.push(data);
     });
 
-function getComparableDate(article) {
-    if (article.timestamp?.seconds) {
-        return new Date(article.timestamp.seconds * 1000);
-    } else if (typeof article.timestamp === "string") {
-        // Format supposé : "DD/MM/YYYY"
-        const [day, month, year] = article.timestamp.split("/");
-        return new Date(`${year}-${month}-${day}`);
-    }
-    return new Date(0); // Fallback : très ancienne date
+    allArticles.sort((a, b) => getComparableDate(b) - getComparableDate(a));
+
+    populateMediaFilter();
+    updateCategoryFilter();
+    displayArticles(allArticles);
+
+    document.getElementById("mediaFilter").addEventListener("change", () => {
+        updateCategoryFilter();
+        filterAndDisplay();
+    });
+
+    document.getElementById("categoryFilter").addEventListener("change", () => {
+        filterAndDisplay();
+    });
 }
 
-allArticles.sort((a, b) => getComparableDate(b) - getComparableDate(a));
+function populateMediaFilter() {
+    // Media filter is already hardcoded
+}
 
-    allArticles.forEach((article) => {
+function updateCategoryFilter() {
+    const media = document.getElementById("mediaFilter").value;
+    const categories = new Set();
+
+    allArticles.forEach(a => {
+        if (media === "all" || a.source === media) {
+            if (a.category) categories.add(a.category);
+        }
+    });
+
+    const categoryFilter = document.getElementById("categoryFilter");
+    categoryFilter.innerHTML = '<option value="all">Toutes les catégories</option>';
+    Array.from(categories).sort().forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        categoryFilter.appendChild(opt);
+    });
+}
+
+function filterAndDisplay() {
+    const media = document.getElementById("mediaFilter").value;
+    const category = document.getElementById("categoryFilter").value;
+
+    let filtered = allArticles.filter(a => {
+        return (media === "all" || a.source === media) &&
+               (category === "all" || a.category === category);
+    });
+
+    displayArticles(filtered);
+}
+
+function displayArticles(articles) {
+    const container = document.getElementById("articles-container");
+    container.innerHTML = "";
+
+    articles.forEach(article => {
         const preview = converter.makeHtml(article.content.substring(0, 200));
-        const el = document.createElement("div");
-        el.classList.add("article-card");
-        el.innerHTML = `
+        const card = document.createElement("div");
+        card.className = "article-card";
+        card.innerHTML = `
             <a href="article.html?id=${article.id}&media=${article.source}" class="article-link">
                 <h2>${article.title}</h2>
-                <p><em>
-                Auteur : ${article.author} – Publié le : ${article.timestamp} – Catégorie : ${article.category || "Non spécifiée"} | 
-                Source : <strong>${getFullSourceName(article.source)}</strong>
-                </em></p>
+                <p>
+                    Auteur : ${article.author} – Publié le : ${article.timestamp} – Catégorie : ${article.category || "Non spécifiée"} |
+                    Source : <strong>${getFullSourceName(article.source)}</strong>
+                </p>
                 <div>${preview}...</div>
-                ${article.meme ? `<img src="${article.meme}" alt="Illustration" class="article-image">` : ""}
+                ${article.meme ? `<img src="${article.meme}" alt="Illustration" class="article-image">` : ''}
             </a>
-`;
-
-        //el.innerHTML = `
-          //  <a href="article.html?id=${article.id}&media=${article.source}" class="article-link">
-            //    <h2>${article.title}</h2>
-              //  <p class="article-category">${article.category || "Catégorie non spécifiée"}</p>
-                //<p><em>${article.author} – ${article.timestamp}</em> | Source : <strong>${getFullSourceName(article.source)}</strong>
-                //<div>${preview}...</div>
-                //${article.meme ? `<img src="${article.meme}" alt="Illustration" class="article-image">` : ""}
-            //</a>`;
-        container.appendChild(el);
+        `;
+        container.appendChild(card);
     });
 }
 
